@@ -54,9 +54,19 @@ class DataPreprocessor:
 
     def encode_categorical(self) -> None:
         """One-Hot Encoding."""
-        cat_cols = self.df.select_dtypes(
-            include=["object", "category"]
-        ).columns.tolist()
+        n_rows = len(self.df)
+        cat_cols = []
+
+        for col in self.df.select_dtypes(include=["object", "category"]).columns:
+            n_unique = self.df[col].nunique(dropna=True)
+            unique_ratio = n_unique / n_rows
+
+            # Отсекаем некатегориальные столбцы (с большим кол-вом уникальных значений)
+            max_unique = 20
+            max_unique_ratio = 0.1
+            if n_unique <= max_unique and unique_ratio <= max_unique_ratio:
+                cat_cols.append(col)
+
         self._metadata.categorical_columns = cat_cols
 
         if not cat_cols:
